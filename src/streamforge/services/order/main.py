@@ -3,8 +3,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from services.order.api.routes import router as health_router
-from shared.config import get_settings
+from streamforge.services.order.api.routes import router as health_router
+from streamforge.shared.config import get_settings
 
 
 @asynccontextmanager
@@ -12,7 +12,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Startup lifecycle hooks can be placed here
     yield
     # Cleanup / shutdown logic (e.g. engine disposal) can be placed here
-    from services.order.infrastructure.database import _engine
+    from streamforge.services.order.infrastructure.database import _engine
 
     if _engine is not None:
         await _engine.dispose()

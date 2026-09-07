@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from shared.config import get_settings
+from streamforge.shared.config import get_settings
 
 logger = logging.getLogger(__name__)
 

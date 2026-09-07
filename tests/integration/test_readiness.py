@@ -3,13 +3,13 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from services.order.main import app
+from streamforge.services.order.main import app
 
 
 @pytest.mark.asyncio
 async def test_readiness_endpoint_success() -> None:
     with patch(
-        "services.order.api.routes.check_database_connection",
+        "streamforge.services.order.api.routes.check_database_connection",
         new=AsyncMock(return_value=True),
     ):
         transport = ASGITransport(app=app)
@@ -23,7 +23,7 @@ async def test_readiness_endpoint_success() -> None:
 @pytest.mark.asyncio
 async def test_readiness_endpoint_database_unreachable() -> None:
     with patch(
-        "services.order.api.routes.check_database_connection",
+        "streamforge.services.order.api.routes.check_database_connection",
         new=AsyncMock(return_value=False),
     ):
         transport = ASGITransport(app=app)

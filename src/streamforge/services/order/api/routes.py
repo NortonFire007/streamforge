@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
-from services.order.infrastructure.database import check_database_connection
+from streamforge.services.order.infrastructure.database import check_database_connection
 
 router = APIRouter(tags=["Health"])
 

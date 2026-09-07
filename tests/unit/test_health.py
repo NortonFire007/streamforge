@@ -1,7 +1,7 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from services.order.main import app
+from streamforge.services.order.main import app
 
 
 @pytest.mark.asyncio

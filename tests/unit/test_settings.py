@@ -1,4 +1,4 @@
-from shared.config.settings import Settings
+from streamforge.shared.config.settings import Settings
 
 
 def test_default_settings() -> None:

@@ -44,7 +44,7 @@ docker compose up -d
 ### 4. Run Service
 
 ```bash
-uv run uvicorn services.order.main:app --reload --port 8000
+uv run uvicorn streamforge.services.order.main:app --reload --port 8000
 ```
 
 ### 5. Health Checks
