@@ -4,18 +4,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from streamforge.services.order.api.routes import router as health_router
+from streamforge.services.order.infrastructure.database import close_database, init_database
 from streamforge.shared.config import get_settings
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # Startup lifecycle hooks can be placed here
+    # Initialize database resources during startup
+    init_database()
     yield
-    # Cleanup / shutdown logic (e.g. engine disposal) can be placed here
-    from streamforge.services.order.infrastructure.database import _engine
-
-    if _engine is not None:
-        await _engine.dispose()
+    # Cleanup / shutdown database resources
+    await close_database()
 
 
 def create_app() -> FastAPI:

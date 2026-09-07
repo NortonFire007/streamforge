@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Annotated
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -11,22 +12,52 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    app_env: str = Field(default="development", description="Application environment")
-    app_name: str = Field(default="streamforge", description="Application name")
-    log_level: str = Field(default="INFO", description="Log level")
+    app_env: str = "development"
+    app_name: str = "streamforge"
+    log_level: str = "INFO"
 
-    postgres_host: str = Field(default="localhost", description="PostgreSQL host")
-    postgres_port: int = Field(default=5432, description="PostgreSQL port")
-    postgres_db: str = Field(default="streamforge", description="PostgreSQL database name")
-    postgres_user: str = Field(default="streamforge", description="PostgreSQL username")
-    postgres_password: str = Field(default="streamforge", description="PostgreSQL password")
+    postgres_host: str = "localhost"
 
-    kafka_bootstrap_servers: str = Field(
-        default="localhost:9092", description="Kafka bootstrap servers"
-    )
+    postgres_port: Annotated[
+        int,
+        Field(ge=1, le=65535),
+    ] = 5432
+
+    postgres_db: str = "streamforge"
+    postgres_user: str = "streamforge"
+    postgres_password: str = "streamforge"
+
+    database_url: str | None = None
+
+    db_pool_size: Annotated[
+        int,
+        Field(ge=1),
+    ] = 5
+
+    db_max_overflow: Annotated[
+        int,
+        Field(ge=0),
+    ] = 10
+
+    db_pool_timeout: Annotated[
+        float,
+        Field(ge=0),
+    ] = 30.0
+
+    db_pool_recycle: Annotated[
+        int,
+        Field(ge=-1),
+    ] = 1800
+
+    db_pool_pre_ping: bool = True
+
+    kafka_bootstrap_servers: str = "localhost:9092"
 
     @property
     def async_database_url(self) -> str:
+        if self.database_url:
+            return self.database_url
+
         return (
             f"postgresql+psycopg://{self.postgres_user}:{self.postgres_password}@"
             f"{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
