@@ -24,8 +24,16 @@ graph TD
         Kafka[Event Bus - Kafka (Sprint 2)]
     end
     
-    OrderService --> PostgreSQL
 ```
+
+### Interactive Architecture Map
+
+An interactive, self-contained HTML diagram generated with [Archify](https://github.com/tt-a1i/archify) is available at:
+- **Interactive Map:** [streamforge.architecture.html](file:///e:/Programming/pythonProj/2026/streamforge/docs/architecture/streamforge.architecture.html)
+- **Specification Source:** [streamforge.architecture.json](file:///e:/Programming/pythonProj/2026/streamforge/docs/architecture/streamforge.architecture.json)
+
+Features include path focus views (Order/Payment Flow vs. Event-Driven Mesh), node inspection, dark/light themes, and export to PNG/SVG/Share Cards.
+
 
 ## Service Layout
 

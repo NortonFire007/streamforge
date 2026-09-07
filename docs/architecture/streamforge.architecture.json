@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "StreamForge Platform Architecture",
+    "output": "streamforge.architecture.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "order-flow",
+        "label": "Order & Payment Flow",
+        "focus": ["client", "gateway", "order-svc", "payment-svc", "postgres"],
+        "note": "Synchronous order intake and transactional payment processing."
+      },
+      {
+        "id": "event-driven",
+        "label": "Event-Driven Async Mesh",
+        "focus": ["order-svc", "kafka", "fraud-svc", "inventory-svc", "notification-svc"],
+        "note": "Asynchronous event distribution via Kafka event bus for fraud detection and notifications."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client Apps",
+      "sublabel": "Web / Mobile",
+      "pos": [40, 260],
+      "size": [120, 60]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "API Gateway",
+      "sublabel": "Reverse Proxy :443",
+      "pos": [220, 260],
+      "size": [130, 60]
+    },
+    {
+      "id": "order-svc",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "FastAPI :8000",
+      "brand": "fastapi",
+      "pos": [420, 260],
+      "size": [140, 60]
+    },
+    {
+      "id": "payment-svc",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "FastAPI :8001",
+      "brand": "fastapi",
+      "pos": [420, 140],
+      "size": [140, 60]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL 17",
+      "sublabel": "Async SQLAlchemy",
+      "brand": "postgresql",
+      "pos": [640, 140],
+      "size": [140, 60]
+    },
+    {
+      "id": "kafka",
+      "type": "messagebus",
+      "label": "Kafka Event Bus",
+      "sublabel": "Cluster :9092",
+      "brand": "apache-kafka",
+      "pos": [420, 390],
+      "size": [140, 60]
+    },
+    {
+      "id": "fraud-svc",
+      "type": "backend",
+      "label": "Fraud Analytics",
+      "sublabel": "Real-time Scoring",
+      "pos": [640, 270],
+      "size": [140, 60]
+    },
+    {
+      "id": "inventory-svc",
+      "type": "backend",
+      "label": "Inventory Service",
+      "sublabel": "Stock Sync",
+      "pos": [640, 390],
+      "size": [140, 60]
+    },
+    {
+      "id": "notification-svc",
+      "type": "backend",
+      "label": "Notifications",
+      "sublabel": "Webhooks & Email",
+      "pos": [640, 510],
+      "size": [140, 60]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "StreamForge Service Mesh",
+      "wraps": ["order-svc", "payment-svc", "fraud-svc", "inventory-svc", "notification-svc"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-gw",
+      "from": "client",
+      "to": "gateway",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw-to-order",
+      "from": "gateway",
+      "to": "order-svc",
+      "label": "/orders"
+    },
+    {
+      "id": "order-to-payment",
+      "from": "order-svc",
+      "to": "payment-svc",
+      "label": "Authorize",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "order-to-db",
+      "from": "order-svc",
+      "to": "postgres",
+      "label": "Read/Write"
+    },
+    {
+      "id": "order-to-kafka",
+      "from": "order-svc",
+      "to": "kafka",
+      "label": "Publish Events",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 25
+    },
+    {
+      "id": "kafka-to-fraud",
+      "from": "kafka",
+      "to": "fraud-svc",
+      "label": "Stream",
+      "variant": "dashed"
+    },
+    {
+      "id": "kafka-to-inv",
+      "from": "kafka",
+      "to": "inventory-svc",
+      "variant": "dashed"
+    },
+    {
+      "id": "kafka-to-notify",
+      "from": "kafka",
+      "to": "notification-svc",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Ingress & Edge",
+      "items": [
+        "Clients connect via TLS / Reverse Proxy",
+        "FastAPI handles high-throughput asynchronous order ingestion"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Persistence & Consistency",
+      "items": [
+        "PostgreSQL 17 with modern SQLAlchemy 2.x async engine",
+        "Connection pooling and strict transaction isolation"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Event-Driven Analytics",
+      "items": [
+        "Apache Kafka distributes domain events",
+        "Decoupled consumers for fraud scoring, inventory, and notifications"
+      ]
+    }
+  ]
+}
