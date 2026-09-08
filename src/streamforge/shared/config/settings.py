@@ -51,7 +51,24 @@ class Settings(BaseSettings):
 
     db_pool_pre_ping: bool = True
 
+    # Kafka shared configuration
     kafka_bootstrap_servers: str = "localhost:9092"
+
+    # Kafka Producer configuration
+    kafka_producer_client_id: str = "order-service"
+    kafka_producer_acks: str = "all"
+    kafka_producer_enable_idempotence: bool = True
+    kafka_producer_retries: Annotated[int, Field(ge=0)] = 5
+    kafka_producer_linger_ms: Annotated[int, Field(ge=0)] = 5
+    kafka_producer_delivery_timeout_ms: Annotated[int, Field(ge=1)] = 120000
+    kafka_producer_compression_type: str = "lz4"
+
+    # Kafka Consumer configuration
+    # Note: enable.auto.commit is intentionally hardcoded to False in code
+    # and MUST NOT be exposed as an environment variable or setting.
+    kafka_consumer_client_id: str = "order-consumer"
+    kafka_consumer_group_id: str = "order-processing"
+    kafka_consumer_auto_offset_reset: str = "earliest"
 
     @property
     def async_database_url(self) -> str:

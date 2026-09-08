@@ -23,6 +23,21 @@ def test_default_settings() -> None:
     assert settings.db_pool_recycle == 1800
     assert settings.db_pool_pre_ping is True
 
+    # Kafka defaults
+    assert settings.kafka_bootstrap_servers == "localhost:9092"
+    assert settings.kafka_producer_client_id == "order-service"
+    assert settings.kafka_producer_acks == "all"
+    assert settings.kafka_producer_enable_idempotence is True
+    assert settings.kafka_producer_retries == 5
+    assert settings.kafka_producer_linger_ms == 5
+    assert settings.kafka_producer_delivery_timeout_ms == 120000
+    assert settings.kafka_producer_compression_type == "lz4"
+    assert settings.kafka_consumer_client_id == "order-consumer"
+    assert settings.kafka_consumer_group_id == "order-processing"
+    assert settings.kafka_consumer_auto_offset_reset == "earliest"
+    assert not hasattr(settings, "enable_auto_commit")
+    assert not hasattr(settings, "kafka_consumer_enable_auto_commit")
+
 
 def test_settings_database_url_direct_override() -> None:
     custom_url = "postgresql+psycopg://custom_user:custom_pass@dbhost:5433/custom_db"
@@ -43,6 +58,22 @@ def test_settings_environment_override(monkeypatch: object) -> None:
     monkeypatch.setenv("DB_POOL_RECYCLE", "3600")
     monkeypatch.setenv("DB_POOL_PRE_PING", "false")
 
+    # Kafka env overrides
+    monkeypatch.setenv(
+        "KAFKA_BOOTSTRAP_SERVERS",
+        "broker-1:9092,broker-2:9093,broker-3:9094",
+    )
+    monkeypatch.setenv("KAFKA_PRODUCER_CLIENT_ID", "order-service-node-1")
+    monkeypatch.setenv("KAFKA_PRODUCER_ACKS", "1")
+    monkeypatch.setenv("KAFKA_PRODUCER_ENABLE_IDEMPOTENCE", "false")
+    monkeypatch.setenv("KAFKA_PRODUCER_RETRIES", "10")
+    monkeypatch.setenv("KAFKA_PRODUCER_LINGER_MS", "20")
+    monkeypatch.setenv("KAFKA_PRODUCER_DELIVERY_TIMEOUT_MS", "60000")
+    monkeypatch.setenv("KAFKA_PRODUCER_COMPRESSION_TYPE", "gzip")
+    monkeypatch.setenv("KAFKA_CONSUMER_CLIENT_ID", "order-consumer-node-1")
+    monkeypatch.setenv("KAFKA_CONSUMER_GROUP_ID", "order-processing-v2")
+    monkeypatch.setenv("KAFKA_CONSUMER_AUTO_OFFSET_RESET", "latest")
+
     settings = Settings()
     assert settings.app_env == "production"
     assert settings.postgres_port == 5433
@@ -55,3 +86,18 @@ def test_settings_environment_override(monkeypatch: object) -> None:
     assert settings.db_pool_timeout == 45.5
     assert settings.db_pool_recycle == 3600
     assert settings.db_pool_pre_ping is False
+
+    assert (
+        settings.kafka_bootstrap_servers
+        == "broker-1:9092,broker-2:9093,broker-3:9094"
+    )
+    assert settings.kafka_producer_client_id == "order-service-node-1"
+    assert settings.kafka_producer_acks == "1"
+    assert settings.kafka_producer_enable_idempotence is False
+    assert settings.kafka_producer_retries == 10
+    assert settings.kafka_producer_linger_ms == 20
+    assert settings.kafka_producer_delivery_timeout_ms == 60000
+    assert settings.kafka_producer_compression_type == "gzip"
+    assert settings.kafka_consumer_client_id == "order-consumer-node-1"
+    assert settings.kafka_consumer_group_id == "order-processing-v2"
+    assert settings.kafka_consumer_auto_offset_reset == "latest"
