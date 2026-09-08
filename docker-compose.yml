@@ -17,5 +17,189 @@ services:
       timeout: 5s
       retries: 5
 
+  broker-1:
+    image: apache/kafka:4.2.1
+    container_name: streamforge-broker-1
+    restart: unless-stopped
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9090
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://broker-1:29092,EXTERNAL://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: ${KAFKA_CONTROLLER_QUORUM_VOTERS:-1@broker-1:9090,2@broker-2:9090,3@broker-3:9090}
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-CVyl4Z3kSsutM_yEOpb5MQ}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR:-3}
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: ${KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR:-3}
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: ${KAFKA_TRANSACTION_STATE_LOG_MIN_ISR:-2}
+      KAFKA_DEFAULT_REPLICATION_FACTOR: ${KAFKA_DEFAULT_REPLICATION_FACTOR:-3}
+      KAFKA_MIN_INSYNC_REPLICAS: ${KAFKA_MIN_INSYNC_REPLICAS:-2}
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_HEAP_OPTS: "-Xmx512M -Xms512M"
+    volumes:
+      - kafka_data_1:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29092 --list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        IS_CLUSTER=0
+        for i in 1 2 3; do
+          if getent hosts broker-2 > /dev/null 2>&1; then
+            IS_CLUSTER=1
+            break
+          fi
+          sleep 1
+        done
+        if [ "$$IS_CLUSTER" = "0" ] && [ "$$KAFKA_CONTROLLER_QUORUM_VOTERS" = "1@broker-1:9090,2@broker-2:9090,3@broker-3:9090" ]; then
+          echo "Single-broker mode detected: configuring standalone KRaft"
+          export KAFKA_CONTROLLER_QUORUM_VOTERS="1@broker-1:9090"
+          export KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+          export KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+          export KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+          export KAFKA_DEFAULT_REPLICATION_FACTOR=1
+          export KAFKA_MIN_INSYNC_REPLICAS=1
+        fi
+        exec /etc/kafka/docker/run
+
+  broker-2:
+    image: apache/kafka:4.2.1
+    container_name: streamforge-broker-2
+    restart: unless-stopped
+    profiles:
+      - cluster
+    ports:
+      - "9093:9093"
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29093,EXTERNAL://0.0.0.0:9093,CONTROLLER://0.0.0.0:9090
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://broker-2:29093,EXTERNAL://localhost:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: ${KAFKA_CONTROLLER_QUORUM_VOTERS:-1@broker-1:9090,2@broker-2:9090,3@broker-3:9090}
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-CVyl4Z3kSsutM_yEOpb5MQ}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_HEAP_OPTS: "-Xmx512M -Xms512M"
+    volumes:
+      - kafka_data_2:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29093 --list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  broker-3:
+    image: apache/kafka:4.2.1
+    container_name: streamforge-broker-3
+    restart: unless-stopped
+    profiles:
+      - cluster
+    ports:
+      - "9094:9094"
+    environment:
+      KAFKA_NODE_ID: 3
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29094,EXTERNAL://0.0.0.0:9094,CONTROLLER://0.0.0.0:9090
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://broker-3:29094,EXTERNAL://localhost:9094
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: ${KAFKA_CONTROLLER_QUORUM_VOTERS:-1@broker-1:9090,2@broker-2:9090,3@broker-3:9090}
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-CVyl4Z3kSsutM_yEOpb5MQ}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_HEAP_OPTS: "-Xmx512M -Xms512M"
+    volumes:
+      - kafka_data_3:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29094 --list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  kafka-init:
+    image: apache/kafka:4.2.1
+    container_name: streamforge-kafka-init
+    restart: "no"
+    profiles:
+      - cluster
+    depends_on:
+      broker-1:
+        condition: service_healthy
+      broker-2:
+        condition: service_healthy
+      broker-3:
+        condition: service_healthy
+    entrypoint:
+      - /bin/bash
+      - -c
+    command:
+      - |
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server broker-1:29092,broker-2:29093,broker-3:29094 \
+          --create --if-not-exists \
+          --topic orders.events \
+          --partitions 6 \
+          --replication-factor 3 \
+          --config min.insync.replicas=2 \
+          --config cleanup.policy=delete \
+          --config retention.ms=604800000 && \
+        echo "Topic orders.events successfully provisioned:" && \
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server broker-1:29092,broker-2:29093,broker-3:29094 \
+          --describe --topic orders.events
+
+  kafka-init-single:
+    image: apache/kafka:4.2.1
+    container_name: streamforge-kafka-init-single
+    restart: "no"
+    profiles:
+      - single-broker
+    depends_on:
+      broker-1:
+        condition: service_healthy
+    entrypoint:
+      - /bin/bash
+      - -c
+    command:
+      - |
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server broker-1:29092 \
+          --create --if-not-exists \
+          --topic orders.events \
+          --partitions 3 \
+          --replication-factor 1 \
+          --config min.insync.replicas=1 \
+          --config cleanup.policy=delete \
+          --config retention.ms=604800000 && \
+        echo "Single-broker topic orders.events successfully provisioned:" && \
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server broker-1:29092 \
+          --describe --topic orders.events
+
 volumes:
   postgres_data:
+  kafka_data_1:
+  kafka_data_2:
+  kafka_data_3:
