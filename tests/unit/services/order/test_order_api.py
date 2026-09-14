@@ -239,7 +239,6 @@ async def test_lifespan_kafka_producer_startup_and_flush() -> None:
 
     with (
         patch("streamforge.services.order.main.init_database"),
-        patch("streamforge.services.order.main.init_tables", new_callable=AsyncMock),
         patch("streamforge.services.order.main.close_database", new_callable=AsyncMock),
         patch("streamforge.services.order.main.build_producer", return_value=mock_producer),
     ):
